@@ -89,6 +89,7 @@ import type { Ctx } from '@milkdown/kit/ctx'
 import type { Selection } from '@milkdown/kit/prose/state'
 import type { DefineFeature } from '@milkdown/crepe/feature/shared'
 import type { ToolbarItem } from '@milkdown/crepe/feature/toolbar'
+import { ToolbarItemPresets } from '@milkdown/crepe'
 
 // 1. Define the highlight mark schema
 export const highlightSchema = $markSchema('highlight', () => ({
@@ -150,8 +151,8 @@ export const highlightFeature: DefineFeature = (editor) => {
   editor.use(highlightSchema).use(toggleHighlightCommand)
 }
 
-// 5. Main highlight toolbar item
-export const highlightToolbarItem: ToolbarItem = {
+// 5. Main highlight toolbar item using ToolbarItemPresets
+export const highlightToolbarItem: ToolbarItem = ToolbarItemPresets.requiresSelection({
   key: 'highlight',
   icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
     <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001z"/>
@@ -164,13 +165,10 @@ export const highlightToolbarItem: ToolbarItem = {
   isActive: (ctx, selection) => {
     return isHighlightActive(ctx, selection)
   },
-  isDisabled: (ctx, selection) => {
-    return selection.empty
-  },
-}
+})
 
-// 6. Color-specific highlight items
-export const createHighlightItem = (color: string, name: string): ToolbarItem => ({
+// 6. Color-specific highlight items using ToolbarItemPresets
+export const createHighlightItem = (color: string, name: string): ToolbarItem => ToolbarItemPresets.requiresSelection({
   key: `highlight-${color.replace('#', '')}`,
   icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
     color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'
@@ -196,7 +194,6 @@ export const createHighlightItem = (color: string, name: string): ToolbarItem =>
     })
     return hasColorHighlight
   },
-  isDisabled: (ctx, selection) => selection.empty,
 })
 
 // 7. Predefined color toolbar items
@@ -228,6 +225,67 @@ builder
 
 const editor = builder.create()
 ```
+
+## Plugin Utilities
+
+Crepe provides helpful utility functions to simplify common plugin patterns. These utilities reduce boilerplate code and ensure consistent behavior across plugins.
+
+### ToolbarItemPresets
+
+The `ToolbarItemPresets` utility provides common toolbar item configurations:
+
+```typescript
+import { ToolbarItemPresets } from '@milkdown/crepe'
+
+// Item that requires text selection (automatically disabled when selection is empty)
+const selectionItem = ToolbarItemPresets.requiresSelection({
+  key: 'my-item',
+  icon: '🎨',
+  tooltip: 'My Action',
+  onClick: (ctx) => { /* your logic */ },
+  isActive: (ctx, selection) => false, // optional
+})
+
+// Item that is always enabled
+const alwaysEnabledItem = ToolbarItemPresets.alwaysEnabled({
+  key: 'my-item',
+  icon: '🔧',
+  tooltip: 'Always Available',
+  onClick: (ctx) => { /* your logic */ },
+  isActive: (ctx, selection) => false, // optional
+})
+```
+
+### SlashMenuItemPresets
+
+The `SlashMenuItemPresets` utility provides common slash menu item patterns:
+
+```typescript
+import { SlashMenuItemPresets } from '@milkdown/crepe'
+
+// Simple text insertion
+const textItem = SlashMenuItemPresets.textInsertion({
+  key: 'signature',
+  label: 'Insert Signature',
+  icon: '✍️',
+  text: 'Best regards,\nJohn Doe'
+})
+
+// Block replacement (requires NodeType)
+const blockItem = SlashMenuItemPresets.blockReplacement({
+  key: 'callout',
+  label: 'Callout Block',
+  icon: '📢',
+  nodeType: myNodeType, // Your ProseMirror NodeType
+  attrs: { type: 'info' } // optional attributes
+})
+```
+
+These utilities handle common patterns like:
+- Automatic disabling when selection is empty (`requiresSelection`)
+- Text insertion at cursor position (`textInsertion`)
+- Block type replacement (`blockReplacement`)
+- Consistent state management
 
 ### ToolbarItem Interface
 
