@@ -1,19 +1,18 @@
 import React from 'react'
-import { toolbar } from '../../../packages/crepe/src/feature/toolbar'
-import { Crepe, blockEdit } from '../../../packages/crepe/src/index'
+
+import { toolbar } from '../../packages/crepe/src/feature/toolbar'
+import { Crepe, blockEdit } from '../../packages/crepe/src/index'
 import {
   Milkdown,
   MilkdownProvider,
   useEditor,
-} from '../../../packages/integrations/react/src'
-
+} from '../../packages/integrations/react/src'
 // Import features
-import { highlightFeature, highlightToolbarItems } from '../features/highlight'
-import { quizFeature, customSlashMenu } from '../features/quiz'
-
+import { highlightFeature, highlightToolbarItems } from './features/highlight'
+import { quizFeature, customSlashMenu } from './features/quiz'
 // Import styles
-import '../../../packages/crepe/src/theme/common/style.css'
-import '../../../packages/crepe/src/theme/frame/style.css'
+import '../../packages/crepe/src/theme/common/style.css'
+import '../../packages/crepe/src/theme/frame/style.css'
 
 // Crepe Editor component
 const CrepeEditor = () => {

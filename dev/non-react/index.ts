@@ -8,6 +8,10 @@ import { highlightFeature, highlightToolbarItems } from './features/highlight'
 // Import quiz feature and slash menu
 import { quizFeature, customSlashMenu } from './features/quiz'
 
+// Import styles
+import '../../packages/crepe/src/theme/common/style.css'
+import '../../packages/crepe/src/theme/frame/style.css'
+
 // Build the editor with both highlight and quiz features
 const builder = new CrepeBuilder({ root: '#editor' })
 
@@ -15,12 +19,12 @@ builder
   // Register features
   .addFeature(highlightFeature)
   .addFeature(quizFeature)
-  
+
   // Add toolbar with highlight items
   .addFeature(toolbar, {
     customItems: highlightToolbarItems,
   })
-  
+
   // Add block edit with custom slash menu
   .addFeature(blockEdit, {
     buildMenu: customSlashMenu,
@@ -28,5 +32,3 @@ builder
 
 // Create the editor
 const editor = builder.create()
-
-console.log('Non-React Crepe editor initialized with highlight and quiz features')

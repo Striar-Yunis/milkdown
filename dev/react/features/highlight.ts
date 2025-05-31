@@ -1,8 +1,9 @@
-import { $markSchema, $command } from '../../../packages/utils/src'
-import { toggleMark } from '../../../packages/kit/src/prose/commands'
-import { editorViewCtx, commandsCtx } from '../../../packages/kit/src/core'
 import type { DefineFeature } from '../../../packages/crepe/src/feature/shared'
 import type { ToolbarItem } from '../../../packages/crepe/src/feature/toolbar'
+
+import { editorViewCtx, commandsCtx } from '../../../packages/kit/src/core'
+import { toggleMark } from '../../../packages/kit/src/prose/commands'
+import { $markSchema, $command } from '../../../packages/utils/src'
 
 // Highlight mark schema
 export const highlightSchema = $markSchema('highlight', () => ({
@@ -84,7 +85,10 @@ export const highlightToolbarItem: ToolbarItem = {
 }
 
 // Color-specific highlight items
-export const createHighlightItem = (color: string, name: string): ToolbarItem => ({
+export const createHighlightItem = (
+  color: string,
+  name: string
+): ToolbarItem => ({
   key: `highlight-${color.replace('#', '')}`,
   icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
     color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'

@@ -1,4 +1,5 @@
 import React from 'react'
+
 import type { QuizOption } from '../types/quiz'
 
 interface QuizReactViewProps {
@@ -21,7 +22,7 @@ export function QuizReactView({
   isSelected,
 }: QuizReactViewProps) {
   return (
-    <div 
+    <div
       className="quiz-component"
       style={{
         border: '2px solid #e1e5e9',
@@ -33,7 +34,7 @@ export function QuizReactView({
         transition: 'all 0.2s ease',
       }}
     >
-      <div 
+      <div
         className="quiz-question"
         style={{
           fontSize: '16px',
@@ -44,7 +45,7 @@ export function QuizReactView({
       >
         {question}
       </div>
-      
+
       <div className="quiz-options">
         {options.map((option) => (
           <div
@@ -56,7 +57,8 @@ export function QuizReactView({
               border: '1px solid #ddd',
               borderRadius: '4px',
               cursor: 'pointer',
-              backgroundColor: selectedAnswer === option.id ? '#e3f2fd' : '#fff',
+              backgroundColor:
+                selectedAnswer === option.id ? '#e3f2fd' : '#fff',
               borderColor: selectedAnswer === option.id ? '#2196f3' : '#ddd',
               transition: 'all 0.2s ease',
               display: 'flex',
@@ -64,28 +66,32 @@ export function QuizReactView({
             }}
             onClick={() => onSelect(option.id)}
           >
-            <span style={{ 
-              marginRight: '8px', 
-              color: selectedAnswer === option.id ? '#2196f3' : '#666' 
-            }}>
+            <span
+              style={{
+                marginRight: '8px',
+                color: selectedAnswer === option.id ? '#2196f3' : '#666',
+              }}
+            >
               {selectedAnswer === option.id ? '●' : '○'}
             </span>
             {option.text}
             {showResult && option.isCorrect && (
-              <span style={{ 
-                marginLeft: 'auto', 
-                color: '#4caf50', 
-                fontWeight: 'bold' 
-              }}>
+              <span
+                style={{
+                  marginLeft: 'auto',
+                  color: '#4caf50',
+                  fontWeight: 'bold',
+                }}
+              >
                 ✓
               </span>
             )}
           </div>
         ))}
       </div>
-      
+
       {showResult && (
-        <div 
+        <div
           className="quiz-result"
           style={{
             marginTop: '12px',
@@ -96,10 +102,14 @@ export function QuizReactView({
             fontWeight: 'bold',
           }}
         >
-          Correct answer: {options.filter((o) => o.isCorrect).map((o) => o.text).join(', ')}
+          Correct answer:{' '}
+          {options
+            .filter((o) => o.isCorrect)
+            .map((o) => o.text)
+            .join(', ')}
         </div>
       )}
-      
+
       {isSelected && (
         <button
           className="quiz-edit-btn"

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+
 import type { QuizOption } from '../types/quiz'
 
 interface QuizEditModalProps {
@@ -63,34 +64,38 @@ export function QuizEditModal({
         }}
       >
         <h3 style={{ margin: '0 0 16px 0' }}>Edit Quiz</h3>
-        
+
         <div style={{ marginBottom: 12 }}>
-          <label style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}>
+          <label
+            style={{ display: 'block', marginBottom: 4, fontWeight: 'bold' }}
+          >
             Question:
           </label>
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            style={{ 
-              width: '100%', 
-              padding: '8px', 
-              border: '1px solid #ddd', 
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ddd',
               borderRadius: '4px',
               boxSizing: 'border-box',
             }}
           />
         </div>
-        
+
         <div>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
+          <label
+            style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}
+          >
             Options:
           </label>
           {opts.map((opt, idx) => (
             <div
               key={opt.id}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
                 marginBottom: 6,
                 gap: 8,
               }}
@@ -99,20 +104,22 @@ export function QuizEditModal({
                 value={opt.text}
                 onChange={(e) => updateOption(idx, 'text', e.target.value)}
                 placeholder={`Option ${idx + 1}`}
-                style={{ 
-                  flex: 1, 
-                  padding: '4px 8px', 
-                  border: '1px solid #ddd', 
-                  borderRadius: '4px' 
+                style={{
+                  flex: 1,
+                  padding: '4px 8px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
                 }}
               />
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 4,
-                fontSize: '14px',
-                whiteSpace: 'nowrap',
-              }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: '14px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={!!opt.isCorrect}
@@ -124,11 +131,11 @@ export function QuizEditModal({
               </label>
               <button
                 onClick={() => removeOption(idx)}
-                style={{ 
-                  padding: '4px 8px', 
-                  border: '1px solid #ddd', 
-                  background: '#fff', 
-                  borderRadius: '4px', 
+                style={{
+                  padding: '4px 8px',
+                  border: '1px solid #ddd',
+                  background: '#fff',
+                  borderRadius: '4px',
                   cursor: 'pointer',
                   fontSize: '14px',
                 }}
@@ -138,15 +145,15 @@ export function QuizEditModal({
               </button>
             </div>
           ))}
-          <button 
-            onClick={addOption} 
-            style={{ 
-              marginTop: 8, 
-              padding: '8px 16px', 
-              border: '1px solid #007bff', 
-              background: '#fff', 
+          <button
+            onClick={addOption}
+            style={{
+              marginTop: 8,
+              padding: '8px 16px',
+              border: '1px solid #007bff',
+              background: '#fff',
               color: '#007bff',
-              borderRadius: '4px', 
+              borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '14px',
             }}
@@ -154,7 +161,7 @@ export function QuizEditModal({
             Add Option
           </button>
         </div>
-        
+
         <div
           style={{
             marginTop: 16,
@@ -163,13 +170,13 @@ export function QuizEditModal({
             gap: 8,
           }}
         >
-          <button 
+          <button
             onClick={onCancel}
-            style={{ 
-              padding: '8px 16px', 
-              border: '1px solid #ddd', 
-              background: '#fff', 
-              borderRadius: '4px', 
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #ddd',
+              background: '#fff',
+              borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '14px',
             }}
@@ -178,12 +185,12 @@ export function QuizEditModal({
           </button>
           <button
             onClick={() => onSave(q, opts)}
-            style={{ 
-              padding: '8px 16px', 
-              background: '#007bff', 
-              color: '#fff', 
-              border: 'none', 
-              borderRadius: '4px', 
+            style={{
+              padding: '8px 16px',
+              background: '#007bff',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 'bold',

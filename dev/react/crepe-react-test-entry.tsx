@@ -1,6 +1,6 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import { MilkdownEditorWrapper } from './crepe-react-test'
+import { MilkdownEditorWrapper } from './index.tsx'
 
 const root = document.getElementById('root')
 if (root) {
