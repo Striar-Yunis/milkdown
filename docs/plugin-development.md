@@ -6,7 +6,7 @@ This guide shows how to create custom plugins for the Crepe editor to extend bot
 
 ```typescript
 import { CrepeBuilder } from '@milkdown/crepe/builder'
-import { toolbar, blockEdit } from '@milkdown/crepe/feature'
+import { toolbar, blockEdit } from '@milkdown/crepe'
 import { ToolbarItemPresets, type ToolbarItem, type GroupBuilder } from '@milkdown/crepe'
 
 const builder = new CrepeBuilder({ root: '#editor' })
@@ -48,10 +48,13 @@ You can add custom toolbar items by providing a `customItems` array in the toolb
 
 ```typescript
 import { CrepeBuilder } from '@milkdown/crepe/builder'
-import { toolbar, type ToolbarItem, ToolbarItemPresets } from '@milkdown/crepe/feature/toolbar'
+import { toolbar, type ToolbarItem } from '@milkdown/crepe'
 import { $markSchema, $command } from '@milkdown/utils'
-import { toggleMark } from '@milkdown/kit/prose/commands'
+import { toggleMark } from '@milkdown/prose/commands'
 import { editorViewCtx, commandsCtx } from '@milkdown/kit/core'
+import type { Ctx } from '@milkdown/kit/ctx'
+import type { Selection } from '@milkdown/prose/state'
+import type { DefineFeature } from '@milkdown/crepe/feature/shared'
 
 // First, define the highlight mark schema
 const highlightSchema = $markSchema('highlight', () => ({
@@ -100,6 +103,13 @@ function isHighlightActive(ctx: Ctx, selection: Selection): boolean {
   })
   
   return hasHighlight
+}
+
+// Create a custom feature to register the highlight functionality
+const highlightFeature: DefineFeature = (editor) => {
+  editor
+    .use(highlightSchema)
+    .use(toggleHighlightCommand)
 }
 
 // Define the complete highlight toolbar item
@@ -155,9 +165,8 @@ const createHighlightItem = (color: string, name: string): ToolbarItem => ({
 const builder = new CrepeBuilder({ root: '#editor' })
 
 builder
-  // Register the highlight schema and command first
-  .use(highlightSchema)
-  .use(toggleHighlightCommand)
+  // Register the highlight feature first
+  .addFeature(highlightFeature)
   // Add toolbar with highlight items
   .addFeature(toolbar, {
     customItems: [
@@ -168,6 +177,8 @@ builder
       createHighlightItem('#ccccff', 'Blue'),
     ]
   })
+
+const editor = builder.create()
 ```
 
 ### ToolbarItem Interface
@@ -217,9 +228,11 @@ You can customize the slash menu by providing a `buildMenu` function in the bloc
 
 ```typescript
 import { CrepeBuilder } from '@milkdown/crepe/builder'
-import { blockEdit, type GroupBuilder } from '@milkdown/crepe/feature/block-edit'
+import { blockEdit, type GroupBuilder } from '@milkdown/crepe'
 import { $nodeSchema, $command, $component } from '@milkdown/utils'
-import { editorViewCtx } from '@milkdown/kit/core'
+import { editorViewCtx, commandsCtx } from '@milkdown/kit/core'
+import type { Ctx } from '@milkdown/kit/ctx'
+import type { DefineFeature } from '@milkdown/crepe/feature/shared'
 
 // Define quiz option interface
 interface QuizOption {
@@ -608,13 +621,19 @@ const customSlashMenu = (builder: GroupBuilder) => {
   })
 }
 
+// Create a custom feature to register the quiz functionality
+const quizFeature: DefineFeature = (editor) => {
+  editor
+    .use(quizSchema)
+    .use(insertQuizCommand)
+    .use(quizComponent)
+}
+
 // Build the editor with quiz functionality
 const builder = new CrepeBuilder({ root: '#editor' })
 
 builder
-  .use(quizSchema)
-  .use(insertQuizCommand)
-  .use(quizComponent)
+  .addFeature(quizFeature)
   .addFeature(blockEdit, {
     buildMenu: customSlashMenu
   })

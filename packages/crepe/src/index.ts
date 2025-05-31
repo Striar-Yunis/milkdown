@@ -10,4 +10,7 @@ export {
   type ToolbarAction,
   type SlashMenuAction
 } from './feature'
+export { toolbar } from './feature/toolbar'
+export { blockEdit } from './feature/block-edit'
+export type { DefineFeature } from './feature/shared'
 export * from './core'
