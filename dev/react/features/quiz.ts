@@ -3,7 +3,7 @@ import type { QuizOption, QuizAttrs } from '../types/quiz'
 
 import { commandsCtx } from '../../../packages/kit/src/core'
 import { $nodeSchema, $command, $component } from '../../../packages/utils/src'
-import { QuizComponent } from '../components/QuizComponent'
+import { QuizComponent } from '../components/quiz-component'
 
 // Quiz node schema
 export const quizSchema = $nodeSchema('quiz', () => ({

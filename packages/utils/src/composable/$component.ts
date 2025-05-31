@@ -1,6 +1,7 @@
 // Minimal $component utility for registering custom node views/components
 import type { Ctx, MilkdownPlugin } from '@milkdown/ctx'
 import type { NodeViewConstructor } from '@milkdown/prose/view'
+
 import { nodeViewCtx, SchemaReady } from '@milkdown/core'
 
 export function $component(
@@ -13,7 +14,7 @@ export function $component(
 ): MilkdownPlugin {
   return (ctx) => async () => {
     await ctx.wait(SchemaReady)
-    const { component, as = 'div', shouldUpdate } = factory(ctx)
+    const { component } = factory(ctx)
     const nodeView: NodeViewConstructor = (node, view, getPos) => {
       return new component(node, view, getPos, ctx)
     }

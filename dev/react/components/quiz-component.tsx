@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client'
 
 import type { QuizOption, QuizAttrs } from '../types/quiz'
 
-import { QuizEditModal } from './QuizEditModal'
-import { QuizReactView } from './QuizReactView'
+import { QuizEditModal } from './quiz-edit-modal'
+import { QuizReactView } from './quiz-react-view'
 
 export class QuizComponent {
   dom: HTMLElement
