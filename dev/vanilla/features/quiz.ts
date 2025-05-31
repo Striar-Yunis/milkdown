@@ -1,7 +1,11 @@
-import { $nodeSchema, $command, $component } from '../../../packages/utils/src'
-import { commandsCtx } from '../../../packages/kit/src/core'
+import { $nodeSchema, $command, $component } from '@milkdown/utils'
+import { commandsCtx } from '@milkdown/kit/core'
 import type { DefineFeature } from '../../../packages/crepe/src/feature/shared'
-import { QuizComponent, type QuizOption, type QuizAttrs } from '../components/quiz-component'
+import {
+  QuizComponent,
+  type QuizOption,
+  type QuizAttrs,
+} from '../components/quiz-component'
 
 // Quiz node schema
 export const quizSchema = $nodeSchema('quiz', () => ({
@@ -96,42 +100,46 @@ export const quizSchema = $nodeSchema('quiz', () => ({
 }))
 
 // Command to insert a quiz
-export const insertQuizCommand = $command('InsertQuiz', (ctx) => (attrs?: Partial<QuizAttrs>) => {
-  return (state, dispatch) => {
-    const quizType = quizSchema.type(ctx)
-    const { tr, selection } = state
-    const patchAttrs = typeof attrs === 'object' && attrs !== null ? attrs : {}
-    
-    const quizNode = quizType.create({
-      question: 'What is the correct answer?',
-      options: [
-        { id: '1', text: 'Option A', isCorrect: false },
-        { id: '2', text: 'Option B', isCorrect: true },
-        { id: '3', text: 'Option C', isCorrect: false },
-        { id: '4', text: 'Option D', isCorrect: false },
-      ],
-      selectedAnswer: null,
-      showResult: false,
-      ...patchAttrs,
-    })
+export const insertQuizCommand = $command(
+  'InsertQuiz',
+  (ctx) => (attrs?: Partial<QuizAttrs>) => {
+    return (state, dispatch) => {
+      const quizType = quizSchema.type(ctx)
+      const { tr, selection } = state
+      const patchAttrs =
+        typeof attrs === 'object' && attrs !== null ? attrs : {}
 
-    // If selection is inside a paragraph, replace the parent block
-    const $from = selection.$from
-    const parent = $from.node($from.depth)
-    if (parent.type.name === 'paragraph') {
-      const pos = $from.before($from.depth)
+      const quizNode = quizType.create({
+        question: 'What is the correct answer?',
+        options: [
+          { id: '1', text: 'Option A', isCorrect: false },
+          { id: '2', text: 'Option B', isCorrect: true },
+          { id: '3', text: 'Option C', isCorrect: false },
+          { id: '4', text: 'Option D', isCorrect: false },
+        ],
+        selectedAnswer: null,
+        showResult: false,
+        ...patchAttrs,
+      })
+
+      // If selection is inside a paragraph, replace the parent block
+      const $from = selection.$from
+      const parent = $from.node($from.depth)
+      if (parent.type.name === 'paragraph') {
+        const pos = $from.before($from.depth)
+        if (dispatch) {
+          dispatch(tr.replaceWith(pos, pos + parent.nodeSize, quizNode))
+        }
+        return true
+      }
+
       if (dispatch) {
-        dispatch(tr.replaceWith(pos, pos + parent.nodeSize, quizNode))
+        dispatch(tr.replaceSelectionWith(quizNode))
       }
       return true
     }
-
-    if (dispatch) {
-      dispatch(tr.replaceSelectionWith(quizNode))
-    }
-    return true
   }
-})
+)
 
 // Quiz component registration
 export const quizComponent = $component('quiz', (ctx) => {

@@ -1,20 +1,13 @@
-// dev/toolbar-local-test.ts
+import { $markSchema, $command } from '@milkdown/utils'
+import { toggleMark } from '@milkdown/kit/prose/commands'
+import { editorViewCtx, commandsCtx } from '@milkdown/kit/core'
+import type { Ctx } from '@milkdown/kit/ctx'
+import type { Selection } from '@milkdown/kit/prose/state'
+import type { DefineFeature } from '../../../packages/crepe/src/feature/shared'
+import type { ToolbarItem } from '@milkdown/crepe/feature/toolbar'
 
-import { CrepeBuilder } from '../packages/crepe/src/builder'
-import {
-  toolbar,
-  type ToolbarItem,
-} from '../packages/crepe/src/feature/toolbar'
-import { $markSchema, $command } from '../packages/utils/src'
-import { toggleMark } from '../packages/kit/src/prose/commands'
-import { editorViewCtx, commandsCtx } from '../packages/kit/src/core'
-
-import type { Ctx } from '../packages/kit/src/ctx'
-import type { Selection } from '../packages/kit/src/prose/state'
-import type { DefineFeature } from '../packages/crepe/src/feature/shared'
-
-// First, define the highlight mark schema
-const highlightSchema = $markSchema('highlight', () => ({
+// Highlight mark schema
+export const highlightSchema = $markSchema('highlight', () => ({
   attrs: {
     color: {
       default: 'yellow',
@@ -39,8 +32,8 @@ const highlightSchema = $markSchema('highlight', () => ({
   ],
 }))
 
-// Create the toggle command
-const toggleHighlightCommand = $command(
+// Toggle highlight command
+export const toggleHighlightCommand = $command(
   'ToggleHighlight',
   (ctx) =>
     (color = 'yellow') => {
@@ -53,7 +46,7 @@ function isHighlightActive(ctx: Ctx, selection: Selection): boolean {
   const highlightType = highlightSchema.type(ctx)
   const { from, to } = selection
   const view = ctx.get(editorViewCtx)
-  if (!view || !view.state) return false // <-- Add this guard
+  if (!view || !view.state) return false
   const { doc } = view.state
 
   let hasHighlight = false
@@ -68,13 +61,13 @@ function isHighlightActive(ctx: Ctx, selection: Selection): boolean {
   return hasHighlight
 }
 
-// Create a custom feature to register the highlight functionality
-const highlightFeature: DefineFeature = (editor) => {
+// Highlight feature
+export const highlightFeature: DefineFeature = (editor) => {
   editor.use(highlightSchema).use(toggleHighlightCommand)
 }
 
-// Define the complete highlight toolbar item
-const highlightToolbarItem: ToolbarItem = {
+// Main highlight toolbar item
+export const highlightToolbarItem: ToolbarItem = {
   key: 'highlight',
   icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
     <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001z"/>
@@ -92,8 +85,11 @@ const highlightToolbarItem: ToolbarItem = {
   },
 }
 
-// Multiple highlight colors example
-const createHighlightItem = (color: string, name: string): ToolbarItem => ({
+// Color-specific highlight items
+export const createHighlightItem = (
+  color: string,
+  name: string
+): ToolbarItem => ({
   key: `highlight-${color.replace('#', '')}`,
   icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
     color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'
@@ -106,7 +102,7 @@ const createHighlightItem = (color: string, name: string): ToolbarItem => ({
   isActive: (ctx, selection) => {
     const highlightType = highlightSchema.type(ctx)
     const view = ctx.get(editorViewCtx)
-    if (!view || !view.state) return false // Guard for undefined view/state
+    if (!view || !view.state) return false
     const { from, to } = selection
     let hasColorHighlight = false
     view.state.doc.nodesBetween(from, to, (node) => {
@@ -122,22 +118,12 @@ const createHighlightItem = (color: string, name: string): ToolbarItem => ({
   isDisabled: (ctx, selection) => selection.empty,
 })
 
-// Build the editor with highlight plugins
-const builder = new CrepeBuilder({ root: '#editor' })
-
-builder
-  // Register the highlight feature first
-  .addFeature(highlightFeature)
-  // Add toolbar with highlight items
-  .addFeature(toolbar, {
-    customItems: [
-      highlightToolbarItem,
-      createHighlightItem('yellow', 'Yellow'),
-      createHighlightItem('#ffcccc', 'Pink'),
-      createHighlightItem('#ccffcc', 'Green'),
-      createHighlightItem('#ccccff', 'Blue'),
-      createHighlightItem('#ffcc99', 'Orange'),
-    ],
-  })
-
-const editor = builder.create()
+// Predefined color toolbar items
+export const highlightToolbarItems: ToolbarItem[] = [
+  highlightToolbarItem,
+  createHighlightItem('yellow', 'Yellow'),
+  createHighlightItem('#ffcccc', 'Pink'),
+  createHighlightItem('#ccffcc', 'Green'),
+  createHighlightItem('#ccccff', 'Blue'),
+  createHighlightItem('#ffcc99', 'Orange'),
+]

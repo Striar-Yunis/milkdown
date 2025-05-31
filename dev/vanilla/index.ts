@@ -1,6 +1,6 @@
-import { CrepeBuilder } from '../../packages/crepe/src/builder'
-import { toolbar } from '../../packages/crepe/src/feature/toolbar'
-import { blockEdit } from '../../packages/crepe/src/feature/block-edit'
+import { CrepeBuilder } from '@milkdown/crepe/builder'
+import { toolbar } from '@milkdown/crepe/feature/toolbar'
+import { blockEdit } from '@milkdown/crepe/feature/block-edit'
 
 // Import highlight feature and toolbar items
 import { highlightFeature, highlightToolbarItems } from './features/highlight'
