@@ -2,13 +2,53 @@
 
 This guide shows how to create custom plugins for the Crepe editor to extend both the toolbar and slash menu functionality.
 
+## Quick Start
+
+```typescript
+import { CrepeBuilder } from '@milkdown/crepe/builder'
+import { toolbar, blockEdit } from '@milkdown/crepe/feature'
+import { ToolbarItemPresets, type ToolbarItem, type GroupBuilder } from '@milkdown/crepe'
+
+const builder = new CrepeBuilder({ root: '#editor' })
+
+// Add custom toolbar items
+builder.addFeature(toolbar, {
+  customItems: [
+    ToolbarItemPresets.requiresSelection({
+      key: 'highlight',
+      icon: '🎨',
+      tooltip: 'Highlight text',
+      onClick: (ctx) => {
+        // Your custom logic
+      }
+    })
+  ]
+})
+
+// Add custom slash menu items
+builder.addFeature(blockEdit, {
+  buildMenu: (builder: GroupBuilder) => {
+    builder.addGroup('custom', 'My Plugins')
+      .addItem('widget', {
+        label: 'Custom Widget',
+        icon: '⭐',
+        onRun: (ctx) => {
+          // Your custom logic
+        }
+      })
+  }
+})
+
+const editor = builder.create()
+```
+
 ## Toolbar Plugins
 
 You can add custom toolbar items by providing a `customItems` array in the toolbar feature configuration:
 
 ```typescript
 import { CrepeBuilder } from '@milkdown/crepe/builder'
-import { toolbar, type ToolbarItem } from '@milkdown/crepe/feature/toolbar'
+import { toolbar, type ToolbarItem, ToolbarItemPresets } from '@milkdown/crepe/feature/toolbar'
 
 // Define a custom toolbar item
 const customHighlightItem: ToolbarItem = {
@@ -35,9 +75,19 @@ const customHighlightItem: ToolbarItem = {
   }
 }
 
+// Or use presets for common patterns
+const presetItem = ToolbarItemPresets.requiresSelection({
+  key: 'my-action',
+  icon: '🎯',
+  tooltip: 'My Action',
+  onClick: (ctx) => {
+    // This item is automatically disabled when selection is empty
+  }
+})
+
 // Add the toolbar with custom items
 builder.addFeature(toolbar, {
-  customItems: [customHighlightItem]
+  customItems: [customHighlightItem, presetItem]
 })
 ```
 
@@ -60,13 +110,35 @@ interface ToolbarItem {
 }
 ```
 
+### Toolbar Item Presets
+
+The `ToolbarItemPresets` provide common configurations:
+
+```typescript
+// Item that's disabled when no text is selected
+const item1 = ToolbarItemPresets.requiresSelection({
+  key: 'format-text',
+  icon: '🎨',
+  tooltip: 'Format selected text',
+  onClick: (ctx) => { /* ... */ }
+})
+
+// Item that's always enabled
+const item2 = ToolbarItemPresets.alwaysEnabled({
+  key: 'insert-something',
+  icon: '➕',
+  tooltip: 'Insert something',
+  onClick: (ctx) => { /* ... */ }
+})
+```
+
 ## Slash Menu Plugins
 
 You can customize the slash menu by providing a `buildMenu` function in the block edit feature configuration:
 
 ```typescript
 import { CrepeBuilder } from '@milkdown/crepe/builder'
-import { blockEdit, type GroupBuilder } from '@milkdown/crepe/feature/block-edit'
+import { blockEdit, type GroupBuilder, SlashMenuItemPresets } from '@milkdown/crepe/feature/block-edit'
 
 // Define custom slash menu items
 const customMenuBuilder = (builder: GroupBuilder) => {
@@ -86,13 +158,12 @@ const customMenuBuilder = (builder: GroupBuilder) => {
         // Add your custom block insertion logic here
       }
     })
-    .addItem('custom-widget', {
-      label: 'Custom Widget',
-      icon: '<svg width="16" height="16" viewBox="0 0 16 16"><circle fill="blue" cx="8" cy="8" r="6"/></svg>',
-      onRun: (ctx) => {
-        // Your custom widget insertion logic
-      }
-    })
+    .addItem('text-snippet', SlashMenuItemPresets.textInsertion({
+      key: 'hello',
+      label: 'Insert Hello',
+      icon: '👋',
+      text: 'Hello, World!'
+    }))
 
   // You can also modify existing groups
   const textGroup = builder.getGroup('text')
@@ -153,12 +224,40 @@ interface GroupInstance {
 }
 ```
 
+### Slash Menu Item Presets
+
+The `SlashMenuItemPresets` provide common patterns:
+
+```typescript
+// Simple text insertion
+const textItem = SlashMenuItemPresets.textInsertion({
+  key: 'signature',
+  label: 'Insert Signature',
+  icon: '✍️',
+  text: 'Best regards,\nYour Name'
+})
+
+// Block type replacement (requires nodeType)
+const blockItem = SlashMenuItemPresets.blockReplacement({
+  key: 'custom-block',
+  label: 'Custom Block',
+  icon: '📦',
+  nodeType: myCustomNodeType,
+  attrs: { customAttr: 'value' }
+})
+```
+
 ## Complete Example
 
 ```typescript
 import { CrepeBuilder } from '@milkdown/crepe/builder'
 import { toolbar, blockEdit } from '@milkdown/crepe/feature'
-import type { ToolbarItem, GroupBuilder } from '@milkdown/crepe/feature'
+import { 
+  ToolbarItemPresets, 
+  SlashMenuItemPresets,
+  type ToolbarItem, 
+  type GroupBuilder 
+} from '@milkdown/crepe'
 
 // Custom toolbar item
 const customToolbarItem: ToolbarItem = {
@@ -183,6 +282,12 @@ const customSlashMenu = (builder: GroupBuilder) => {
         // Your custom element insertion
       }
     })
+    .addItem('quick-text', SlashMenuItemPresets.textInsertion({
+      key: 'signature',
+      label: 'My Signature',
+      icon: '✍️',
+      text: '---\nBest regards,\nJohn Doe'
+    }))
 }
 
 // Create editor with plugins
@@ -193,7 +298,15 @@ const builder = new CrepeBuilder({
 
 builder
   .addFeature(toolbar, {
-    customItems: [customToolbarItem]
+    customItems: [
+      customToolbarItem,
+      ToolbarItemPresets.requiresSelection({
+        key: 'highlight',
+        icon: '🌟',
+        tooltip: 'Highlight text',
+        onClick: (ctx) => { /* highlight logic */ }
+      })
+    ]
   })
   .addFeature(blockEdit, {
     buildMenu: customSlashMenu
@@ -209,6 +322,7 @@ const editor = builder.create()
 3. **Context Usage**: Access the Milkdown context (`ctx`) to interact with the editor state and commands
 4. **Error Handling**: Add proper error handling in your `onClick` and `onRun` functions
 5. **State Management**: Use `isActive` and `isDisabled` functions to provide proper visual feedback
+6. **Use Presets**: Leverage `ToolbarItemPresets` and `SlashMenuItemPresets` for common patterns
 
 ## Advanced Usage
 
