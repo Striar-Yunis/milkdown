@@ -23,7 +23,7 @@ const highlightSchema = $markSchema('highlight', () => ({
   },
   parseDOM: [
     {
-      tag: 'mark',
+      tag: 'mark[data-highlight]',
       getAttrs: (node) => ({
         color: (node as HTMLElement).style.backgroundColor || 'yellow',
       }),
@@ -32,6 +32,7 @@ const highlightSchema = $markSchema('highlight', () => ({
   toDOM: (mark) => [
     'mark',
     {
+      'data-highlight': 'true',
       style: `background-color: ${mark.attrs.color}`,
       class: 'milkdown-highlight',
     },
@@ -93,8 +94,10 @@ const highlightToolbarItem: ToolbarItem = {
 
 // Multiple highlight colors example
 const createHighlightItem = (color: string, name: string): ToolbarItem => ({
-  key: `highlight-${color}`,
-  icon: `<span style="background-color: ${color}; padding: 2px 4px; border-radius: 2px;">A</span>`,
+  key: `highlight-${color.replace('#', '')}`,
+  icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
+    color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'
+  };">A</span>`,
   tooltip: `Highlight with ${name}`,
   onClick: (ctx) => {
     const commands = ctx.get(commandsCtx)
@@ -133,6 +136,7 @@ builder
       createHighlightItem('#ffcccc', 'Pink'),
       createHighlightItem('#ccffcc', 'Green'),
       createHighlightItem('#ccccff', 'Blue'),
+      createHighlightItem('#ffcc99', 'Orange'),
     ],
   })
 

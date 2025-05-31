@@ -48,6 +48,100 @@ You can add custom toolbar items by providing a `customItems` array in the toolb
 
 ```typescript
 import { CrepeBuilder } from '@milkdown/crepe/builder'
+import { toolbar, type ToolbarItem } from '@milkdown/crepe/feature/toolbar'
+import { $markSchema, $command } from '@milkdown/utils'
+import { toggleMark } from '@milkdown/kit/prose/commands'
+import { editorViewCtx, commandsCtx } from '@milkdown/kit/core'
+import type { DefineFeature } from '@milkdown/crepe/feature/shared'
+
+// 1. Define the highlight mark schema
+const highlightSchema = $markSchema('highlight', () => ({
+  attrs: {
+    color: { default: 'yellow', validate: 'string' },
+  },
+  parseDOM: [
+    {
+      tag: 'mark[data-highlight]',
+      getAttrs: (node) => ({
+        color: (node as HTMLElement).style.backgroundColor || 'yellow',
+      }),
+    },
+  ],
+  toDOM: (mark) => [
+    'mark',
+    {
+      'data-highlight': 'true',
+      style: `background-color: ${mark.attrs.color}`,
+      class: 'milkdown-highlight',
+    },
+  ],
+}))
+
+// 2. Define the toggle command
+const toggleHighlightCommand = $command(
+  'ToggleHighlight',
+  (ctx) => (color = 'yellow') =>
+    toggleMark(highlightSchema.type(ctx), { color })
+)
+
+// 3. Helper function to check highlight state
+function isHighlightActive(ctx: Ctx, selection: Selection, color?: string): boolean {
+  const highlightType = highlightSchema.type(ctx)
+  const view = ctx.get(editorViewCtx)
+  if (!view?.state) return false
+
+  const { from, to } = selection
+  let hasHighlight = false
+
+  view.state.doc.nodesBetween(from, to, (node) => {
+    if (hasHighlight) return false
+    const mark = node.marks.find((m) => m.type === highlightType)
+    if (mark && (!color || mark.attrs.color === color)) {
+      hasHighlight = true
+      return false
+    }
+  })
+
+  return hasHighlight
+}
+
+// 4. Create the highlight feature
+const highlightFeature: DefineFeature = (editor) => {
+  editor.use(highlightSchema).use(toggleHighlightCommand)
+}
+
+// 5. Create toolbar items with proper styling
+const createHighlightToolbarItem = (color: string, name: string): ToolbarItem => ({
+  key: `highlight-${color.replace('#', '')}`,
+  icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
+    color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'
+  };">A</span>`,
+  tooltip: `Highlight with ${name}`,
+  onClick: (ctx) => {
+    const commands = ctx.get(commandsCtx)
+    commands.call(toggleHighlightCommand.key, color)
+  },
+  isActive: (ctx, selection) => isHighlightActive(ctx, selection, color),
+  isDisabled: (ctx, selection) => selection.empty,
+})
+
+// 6. Setup the editor
+const builder = new CrepeBuilder({ root: '#editor' })
+
+builder
+  .addFeature(highlightFeature)
+  .addFeature(toolbar, {
+    customItems: [
+      createHighlightToolbarItem('yellow', 'Yellow'),
+      createHighlightToolbarItem('#ffcccc', 'Pink'),
+      createHighlightToolbarItem('#ccffcc', 'Green'),
+      createHighlightToolbarItem('#ccccff', 'Blue'),
+      createHighlightToolbarItem('#ffcc99', 'Orange'),
+    ],
+  })
+
+const editor = builder.create()
+```
 import { toolbar, type ToolbarItem } from '@milkdown/crepe'
 import { $markSchema, $command } from '@milkdown/utils'
 import { toggleMark } from '@milkdown/prose/commands'
@@ -59,14 +153,11 @@ import type { DefineFeature } from '@milkdown/crepe/feature/shared'
 // First, define the highlight mark schema
 const highlightSchema = $markSchema('highlight', () => ({
   attrs: {
-    color: {
-      default: 'yellow',
-      validate: 'string',
-    },
+    color: { default: 'yellow', validate: 'string' },
   },
   parseDOM: [
     {
-      tag: 'mark',
+      tag: 'mark[data-highlight]',
       getAttrs: (node) => ({
         color: (node as HTMLElement).style.backgroundColor || 'yellow',
       }),
@@ -75,6 +166,7 @@ const highlightSchema = $markSchema('highlight', () => ({
   toDOM: (mark) => [
     'mark',
     {
+      'data-highlight': 'true',
       style: `background-color: ${mark.attrs.color}`,
       class: 'milkdown-highlight',
     },
@@ -87,16 +179,18 @@ const toggleHighlightCommand = $command('ToggleHighlight', (ctx) => (color = 'ye
 })
 
 // Helper function to check if text is highlighted
-function isHighlightActive(ctx: Ctx, selection: Selection): boolean {
+function isHighlightActive(ctx: Ctx, selection: Selection, color?: string): boolean {
   const highlightType = highlightSchema.type(ctx)
   const { from, to } = selection
   const view = ctx.get(editorViewCtx)
+  if (!view?.state) return false
   const { doc } = view.state
   
   let hasHighlight = false
   doc.nodesBetween(from, to, (node) => {
     if (hasHighlight) return false
-    if (node.marks.some(mark => mark.type === highlightType)) {
+    const mark = node.marks.find(m => m.type === highlightType)
+    if (mark && (!color || mark.attrs.color === color)) {
       hasHighlight = true
       return false
     }
@@ -252,9 +346,10 @@ interface QuizAttrs {
 // Create the quiz node schema
 const quizSchema = $nodeSchema('quiz', () => ({
   group: 'block',
-  content: '',
+  atom: true, // Leaf node - prevents drag-and-drop errors
+  selectable: true,
   attrs: {
-    question: { default: 'Enter your question here' },
+    question: { default: 'What is the correct answer?' },
     options: { 
       default: [
         { id: '1', text: 'Option A', isCorrect: false },
@@ -270,15 +365,20 @@ const quizSchema = $nodeSchema('quiz', () => ({
       tag: 'div[data-type="quiz"]',
       getAttrs: (dom) => {
         const element = dom as HTMLElement
-        return {
-          question: element.dataset.question || 'Enter your question here',
-          options: JSON.parse(element.dataset.options || '[]'),
-          selectedAnswer: element.dataset.selectedAnswer || null,
-          showResult: element.dataset.showResult === 'true',
+        try {
+          return {
+            question: element.dataset.question || 'What is the correct answer?',
+            options: JSON.parse(element.dataset.options || '[]'),
+            selectedAnswer: element.dataset.selectedAnswer || null,
+            showResult: element.dataset.showResult === 'true',
+          }
+        } catch {
+          return false
         }
       },
     },
   ],
+  // FIXED: No content hole for leaf nodes to prevent drag-and-drop errors
   toDOM: (node) => [
     'div',
     {
@@ -289,7 +389,6 @@ const quizSchema = $nodeSchema('quiz', () => ({
       'data-show-result': node.attrs.showResult.toString(),
       class: 'milkdown-quiz',
     },
-    0,
   ],
 }))
 

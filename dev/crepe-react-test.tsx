@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
 import { toolbar } from '../packages/crepe/src/feature/toolbar'
-import { Crepe } from '../packages/crepe/src/index'
+import { Crepe, blockEdit } from '../packages/crepe/src/index'
 import {
   Milkdown,
   MilkdownProvider,
@@ -30,7 +30,7 @@ const highlightSchema = $markSchema('highlight', () => ({
   },
   parseDOM: [
     {
-      tag: 'mark',
+      tag: 'mark[data-highlight]',
       getAttrs: (node) => ({
         color: (node as HTMLElement).style.backgroundColor || 'yellow',
       }),
@@ -39,6 +39,7 @@ const highlightSchema = $markSchema('highlight', () => ({
   toDOM: (mark) => [
     'mark',
     {
+      'data-highlight': 'true',
       style: `background-color: ${mark.attrs.color}`,
       class: 'milkdown-highlight',
     },
@@ -87,8 +88,10 @@ const highlightToolbarItem = {
 }
 
 const createHighlightItem = (color, name) => ({
-  key: `highlight-${color}`,
-  icon: `<span style="background-color: ${color}; padding: 2px 4px; border-radius: 2px;">A</span>`,
+  key: `highlight-${color.replace('#', '')}`,
+  icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
+    color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'
+  };">A</span>`,
   tooltip: `Highlight with ${name}`,
   onClick: (ctx) => {
     const commands = ctx.get(commandsCtx)
@@ -119,7 +122,6 @@ const customSchemaFeature = (editor) => {
   return {
     nodeView: {
       quiz: (node, view, getPos, decorations, ctx) => {
-        console.log('Quiz node view created', node, view)
         return new QuizComponent(node, view, getPos, ctx)
       },
     },
@@ -133,8 +135,6 @@ const highlightFeature = (editor) => {
 // --- Quiz Section Example ---
 
 import type { DefineFeature } from '../packages/crepe/src/feature/shared'
-
-import { blockEdit } from '../packages/crepe/src/index'
 
 // Quiz option and attributes
 interface QuizOption {
@@ -191,7 +191,7 @@ const quizSchema = $nodeSchema('quiz', () => ({
       'data-show-result': node.attrs.showResult.toString(),
       class: 'milkdown-quiz',
     },
-    0,
+    // No content hole for leaf nodes - this fixes the drag-and-drop error
   ],
   markdown: {
     serialize: 'quiz-block',
@@ -298,35 +298,92 @@ function QuizReactView({
   isSelected: boolean
 }) {
   return (
-    <div className="quiz-component">
-      <div className="quiz-question">{question}</div>
+    <div 
+      className="quiz-component"
+      style={{
+        border: '2px solid #e1e5e9',
+        borderRadius: '8px',
+        padding: '16px',
+        margin: '8px 0',
+        backgroundColor: isSelected ? '#f8f9fa' : '#fff',
+        borderColor: isSelected ? '#007bff' : '#e1e5e9',
+      }}
+    >
+      <div 
+        className="quiz-question"
+        style={{
+          fontSize: '16px',
+          fontWeight: 'bold',
+          marginBottom: '12px',
+          color: '#333',
+        }}
+      >
+        {question}
+      </div>
       <div className="quiz-options">
         {options.map((option) => (
           <div
             key={option.id}
             className={`quiz-option${selectedAnswer === option.id ? ' selected' : ''}`}
+            style={{
+              padding: '10px',
+              margin: '4px 0',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              backgroundColor: selectedAnswer === option.id ? '#e3f2fd' : '#fff',
+              borderColor: selectedAnswer === option.id ? '#2196f3' : '#ddd',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+            }}
             onClick={() => onSelect(option.id)}
           >
+            <span style={{ marginRight: '8px', color: selectedAnswer === option.id ? '#2196f3' : '#666' }}>
+              {selectedAnswer === option.id ? '●' : '○'}
+            </span>
             {option.text}
+            {showResult && option.isCorrect && (
+              <span style={{ marginLeft: 'auto', color: '#4caf50', fontWeight: 'bold' }}>✓</span>
+            )}
           </div>
         ))}
       </div>
       {showResult && (
-        <div className="quiz-result">
-          Correct answer(s):{' '}
-          {options
-            .filter((o) => o.isCorrect)
-            .map((o) => o.text)
-            .join(', ')}
+        <div 
+          className="quiz-result"
+          style={{
+            marginTop: '12px',
+            padding: '8px 12px',
+            backgroundColor: '#e8f5e8',
+            borderRadius: '4px',
+            color: '#2e7d32',
+            fontWeight: 'bold',
+          }}
+        >
+          Correct answer: {options.filter((o) => o.isCorrect).map((o) => o.text).join(', ')}
         </div>
       )}
       {isSelected && (
         <button
           className="quiz-edit-btn"
-          onClick={onEdit}
-          style={{ display: 'block' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit()
+          }}
+          style={{
+            marginTop: '12px',
+            padding: '8px 16px',
+            backgroundColor: '#007bff',
+            color: '#white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold',
+          }}
         >
-          Edit
+          Edit Quiz
         </button>
       )}
     </div>
@@ -380,9 +437,9 @@ class QuizComponent {
       : []
     const selected = options.find((o: any) => o.id === answerId)
     if (selected && selected.isCorrect) {
-      this.showPopup('Correct!')
+      this.showPopup('🎉 Correct! Well done!')
     } else {
-      this.showPopup('Try again!')
+      this.showPopup('❌ Not quite right, try again!')
     }
     this.updateAttributes({ selectedAnswer: answerId, showResult: true })
   }
@@ -458,24 +515,22 @@ class QuizComponent {
     const rect = this.dom.getBoundingClientRect()
     this.popupEl.style.position = 'absolute'
     this.popupEl.style.left = `${rect.left + window.scrollX + 20}px`
-    this.popupEl.style.top = `${rect.top + window.scrollY - 30}px`
-    this.popupEl.style.background = '#222'
+    this.popupEl.style.top = `${rect.top + window.scrollY - 40}px`
+    this.popupEl.style.background = message.includes('🎉') ? '#4caf50' : '#f44336'
     this.popupEl.style.color = '#fff'
     this.popupEl.style.padding = '8px 16px'
     this.popupEl.style.borderRadius = '6px'
     this.popupEl.style.zIndex = '9999'
+    this.popupEl.style.fontSize = '14px'
+    this.popupEl.style.fontWeight = 'bold'
+    this.popupEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)'
+    this.popupEl.style.pointerEvents = 'none'
     setTimeout(() => {
       if (this.popupEl) {
         this.popupEl.remove()
         this.popupEl = null
       }
-    }, 1500)
-    this.popupEl.onclick = () => {
-      if (this.popupEl) {
-        this.popupEl.remove()
-        this.popupEl = null
-      }
-    }
+    }, 2000)
   }
 
   destroy() {
@@ -634,7 +689,6 @@ const customSlashMenu = (builder) => {
     label: 'Quiz',
     icon: '<svg width="20" height="20" fill="none" viewBox="0 0 20 20"><rect width="20" height="20" rx="4" fill="#FFD600"/><text x="10" y="15" text-anchor="middle" font-size="12" fill="#222">Quiz</text></svg>',
     onRun: (ctx) => {
-      console.log('Quiz insert command called')
       const commands = ctx.get(commandsCtx)
       commands.call(insertQuizCommand.key)
     },
@@ -653,8 +707,9 @@ const CrepeEditor = () => {
           highlightToolbarItem,
           createHighlightItem('yellow', 'Yellow'),
           createHighlightItem('#ffcccc', 'Pink'),
-          createHighlightItem('#ccffcc', 'Green'),
+          createHighlightItem('#ccffcc', 'Green'), 
           createHighlightItem('#ccccff', 'Blue'),
+          createHighlightItem('#ffcc99', 'Orange'),
         ],
       })
       .addFeature(blockEdit, {
