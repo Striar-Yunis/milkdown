@@ -11,8 +11,6 @@ import { configureMenu, menu, menuAPI } from './menu'
 interface BlockEditConfig {
   handleAddIcon: string
   handleDragIcon: string
-  /// Custom function to build or modify the slash menu
-  /// @param builder - The GroupBuilder instance to customize menu groups and items
   buildMenu: (builder: GroupBuilder) => void
 
   slashMenuTextGroupLabel: string

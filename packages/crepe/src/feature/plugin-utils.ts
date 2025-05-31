@@ -1,5 +1,6 @@
 import type { Ctx } from '@milkdown/kit/ctx'
 import type { Selection } from '@milkdown/kit/prose/state'
+
 import { editorViewCtx } from '@milkdown/kit/core'
 
 /// Utility types for plugin development
