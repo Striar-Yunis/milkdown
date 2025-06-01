@@ -50,6 +50,30 @@ export const quizSchema = $nodeSchema('quiz', () => ({
       'data-show-result': node.attrs.showResult.toString(),
     },
   ],
+  toMarkdown: {
+    match: (node) => node.type.name === 'quiz',
+    runner: (state, node) => {
+      // Serialize as a custom HTML block for now
+      state.addNode('html', undefined, `<div data-type="quiz" data-question="${node.attrs.question}" data-options='${JSON.stringify(node.attrs.options)}'></div>`)
+    },
+  },
+  parseMarkdown: {
+    match: (node) => node.type === 'html' && typeof node.value === 'string' && node.value.includes('data-type="quiz"'),
+    runner: (state, node, type) => {
+      // This is a stub: you can implement parsing from HTML string if needed
+      state.openNode(type, {
+        question: 'What is the correct answer?',
+        options: [
+          { id: '1', text: 'Option A', isCorrect: false },
+          { id: '2', text: 'Option B', isCorrect: true },
+          { id: '3', text: 'Option C', isCorrect: false },
+        ],
+        selectedAnswer: null,
+        showResult: false,
+      })
+      state.closeNode()
+    },
+  },
 }))
 
 // Simple command to insert a quiz
@@ -77,6 +101,18 @@ export const quizComponent = $component('quiz', () => ({
 // Quiz feature registration
 export const quizFeature: DefineFeature = (editor) => {
   editor.use(quizSchema).use(insertQuizCommand).use(quizComponent)
+}
+
+// Custom slash menu builder function
+export const customSlashMenu = (builder: any) => {
+  builder.addGroup('custom', 'Custom').addItem('quiz', {
+    label: 'Quiz',
+    icon: '<svg width="20" height="20" fill="none" viewBox="0 0 20 20"><rect width="20" height="20" rx="4" fill="#FFD600"/><text x="10" y="15" text-anchor="middle" font-size="12" fill="#222">Quiz</text></svg>',
+    onRun: (ctx: any) => {
+      const commands = ctx.get(commandsCtx)
+      commands.call(insertQuizCommand.key)
+    },
+  })
 }
 
 export type { QuizOption, QuizAttrs }
