@@ -110,4 +110,16 @@ export const quizFeature: DefineFeature = (editor) => {
   editor.use(quizSchema).use(insertQuizCommand).use(quizComponent)
 }
 
+// Custom slash menu builder function (if needed)
+export const customSlashMenu = (builder: any) => {
+  builder.addGroup('custom', 'Custom').addItem('quiz', {
+    label: 'Quiz',
+    icon: '<svg width="20" height="20" fill="none" viewBox="0 0 20 20"><rect width="20" height="20" rx="4" fill="#FFD600"/><text x="10" y="15" text-anchor="middle" font-size="12" fill="#222">Quiz</text></svg>',
+    onRun: (ctx: any) => {
+      const commands = ctx.get(commandsCtx)
+      commands.call(insertQuizCommand.key)
+    },
+  })
+}
+
 export type { QuizOption, QuizAttrs }
