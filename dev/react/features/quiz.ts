@@ -5,7 +5,7 @@ import { commandsCtx } from '../../../packages/kit/src/core'
 import { $nodeSchema, $command, $component } from '../../../packages/utils/src'
 import { QuizComponent } from '../components/quiz-component'
 
-// Simplified Quiz node schema - basic functionality only
+// Quiz node schema with full-featured serialization support
 export const quizSchema = $nodeSchema('quiz', () => ({
   group: 'block',
   content: '',
@@ -19,8 +19,8 @@ export const quizSchema = $nodeSchema('quiz', () => ({
         { id: '3', text: 'Option C', isCorrect: false },
       ] as QuizOption[],
     },
-    selectedAnswer: { default: null },
-    showResult: { default: false },
+    // Note: selectedAnswer and showResult are not included in attrs
+    // They should be ephemeral UI state only
   },
   parseDOM: [
     {
@@ -31,8 +31,6 @@ export const quizSchema = $nodeSchema('quiz', () => ({
           return {
             question: element.dataset.question || 'What is the correct answer?',
             options: JSON.parse(element.dataset.options || '[]'),
-            selectedAnswer: element.dataset.selectedAnswer || null,
-            showResult: element.dataset.showResult === 'true',
           }
         } catch {
           return null
@@ -46,39 +44,39 @@ export const quizSchema = $nodeSchema('quiz', () => ({
       'data-type': 'quiz',
       'data-question': node.attrs.question,
       'data-options': JSON.stringify(node.attrs.options),
-      'data-selected-answer': node.attrs.selectedAnswer || '',
-      'data-show-result': node.attrs.showResult.toString(),
+      class: 'milkdown-quiz',
     },
+    0, // content goes here
   ],
-  toMarkdown: {
-    match: (node) => node.type.name === 'quiz',
-    runner: (state, node) => {
-      // Serialize as a custom HTML block for now
-      state.addNode(
-        'html',
-        undefined,
-        `<div data-type="quiz" data-question="${node.attrs.question}" data-options='${JSON.stringify(node.attrs.options)}'></div>`
-      )
-    },
-  },
   parseMarkdown: {
     match: (node) =>
-      node.type === 'html' &&
-      typeof node.value === 'string' &&
-      node.value.includes('data-type="quiz"'),
+      node.type === 'containerDirective' && node.name === 'quiz',
     runner: (state, node, type) => {
-      // This is a stub: you can implement parsing from HTML string if needed
-      state.openNode(type, {
-        question: 'What is the correct answer?',
-        options: [
+      // Parse quiz from markdown directive like :::quiz{question="What is..."}
+      const question = node.attributes?.question || 'What is the correct answer?'
+      const options = node.attributes?.options ? 
+        JSON.parse(node.attributes.options) : 
+        [
           { id: '1', text: 'Option A', isCorrect: false },
           { id: '2', text: 'Option B', isCorrect: true },
           { id: '3', text: 'Option C', isCorrect: false },
-        ],
-        selectedAnswer: null,
-        showResult: false,
+        ]
+      
+      state.addNode(type, { question, options })
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'quiz',
+    runner: (state, node) => {
+      // Serialize quiz to markdown directive
+      const { question, options } = node.attrs
+      state.addNode('containerDirective', undefined, undefined, {
+        name: 'quiz',
+        attributes: {
+          question,
+          options: JSON.stringify(options),
+        },
       })
-      state.closeNode()
     },
   },
 }))

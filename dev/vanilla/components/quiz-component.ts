@@ -1,3 +1,5 @@
+import { NodeSelection } from '@milkdown/prose/state'
+
 export interface QuizOption {
   id: string
   text: string
@@ -7,8 +9,8 @@ export interface QuizOption {
 export interface QuizAttrs {
   question: string
   options: QuizOption[]
-  selectedAnswer?: string
-  showResult: boolean
+  // Note: selectedAnswer and showResult are not part of persisted attributes
+  // They are ephemeral UI state only
 }
 
 export class QuizComponent {
@@ -16,6 +18,10 @@ export class QuizComponent {
   node: any
   view: any
   getPos: () => number
+  
+  // Ephemeral UI state - not persisted to markdown
+  private selectedAnswer: string | null = null
+  private showResult: boolean = false
 
   constructor(node: any, view: any, getPos: () => number) {
     this.node = node
@@ -26,9 +32,9 @@ export class QuizComponent {
   }
 
   render() {
-    const { question, options, selectedAnswer, showResult } = this.node.attrs || {}
+    const { question, options } = this.node.attrs || {}
     
-    const selectedClass = selectedAnswer ? 'selected' : ''
+    const selectedClass = this.selectedAnswer ? 'selected' : ''
     const correctAnswer = options.find((o: QuizOption) => o.isCorrect)?.text || ''
     
     this.dom.innerHTML = `
@@ -36,14 +42,14 @@ export class QuizComponent {
         <div class="quiz-question">${question}</div>
         <div class="quiz-options">
           ${options.map((option: QuizOption) => `
-            <div class="quiz-option ${selectedAnswer === option.id ? 'selected' : ''} ${showResult && option.isCorrect ? 'correct' : ''}" 
+            <div class="quiz-option ${this.selectedAnswer === option.id ? 'selected' : ''} ${this.showResult && option.isCorrect ? 'correct' : ''}" 
                  data-option-id="${option.id}">
-              ${selectedAnswer === option.id ? '●' : '○'} ${option.text}
-              ${showResult && option.isCorrect ? ' ✓' : ''}
+              ${this.selectedAnswer === option.id ? '●' : '○'} ${option.text}
+              ${this.showResult && option.isCorrect ? ' ✓' : ''}
             </div>
           `).join('')}
         </div>
-        ${showResult ? `<div class="quiz-result">Correct answer: ${correctAnswer}</div>` : ''}
+        ${this.showResult ? `<div class="quiz-result">Correct answer: ${correctAnswer}</div>` : ''}
       </div>
     `
 
@@ -53,6 +59,7 @@ export class QuizComponent {
       border-radius: 4px; 
       padding: 12px; 
       margin: 8px 0;
+      cursor: pointer;
     `
 
     // Add click handlers
@@ -62,10 +69,30 @@ export class QuizComponent {
         if (optionId) this.selectAnswer(optionId)
       })
     })
+
+    // Add selection handler for the whole component
+    this.dom.addEventListener('click', (e) => {
+      // Select the node when clicked (but not when clicking options)
+      if (!(e.target as HTMLElement).classList.contains('quiz-option')) {
+        this.selectNode()
+      }
+    })
   }
 
   selectAnswer = (answerId: string) => {
-    this.updateAttributes({ selectedAnswer: answerId, showResult: true })
+    // Update local state only - don't persist to markdown
+    this.selectedAnswer = answerId
+    this.showResult = true
+    this.render()
+  }
+
+  selectNode() {
+    const pos = this.getPos()
+    if (typeof pos !== 'number') return
+    
+    const { tr } = this.view.state
+    const selection = NodeSelection.create(this.view.state.doc, pos)
+    this.view.dispatch(tr.setSelection(selection))
   }
 
   updateAttributes(attrs: Partial<QuizAttrs>) {

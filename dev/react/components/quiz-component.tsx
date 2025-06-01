@@ -15,12 +15,16 @@ export function QuizComponent(node: any, view: any, getPos: () => number) {
   let isSelected = false
   let currentNode = node
 
+  // Ephemeral state - not persisted to markdown
+  let selectedAnswer: string | null = null
+  let showResult: boolean = false
+
   function render() {
     if (!reactRoot) {
       reactRoot = createRoot(dom)
     }
-    const { question, options, selectedAnswer, showResult } =
-      currentNode.attrs || {}
+    const { question, options } = currentNode.attrs || {}
+    
     reactRoot.render(
       <div
         tabIndex={0}
@@ -30,19 +34,7 @@ export function QuizComponent(node: any, view: any, getPos: () => number) {
         }}
         onClick={(e) => {
           e.stopPropagation()
-          // Focus and select the node in the editor
-          if (dom && typeof dom.focus === 'function') dom.focus()
-          if (!isSelected) {
-            // Force selection in the editor
-            const pos = getPos()
-            if (typeof pos === 'number') {
-              const { state, dispatch } = view
-              const tr = state.tr.setSelection(
-                new NodeSelection(state.doc.resolve(pos))
-              )
-              dispatch(tr)
-            }
-          }
+          selectNode()
         }}
       >
         <QuizReactView
@@ -54,29 +46,6 @@ export function QuizComponent(node: any, view: any, getPos: () => number) {
           onEdit={openEdit}
           isSelected={isSelected}
         />
-        {isSelected && !editing && (
-          <button
-            className="quiz-edit-btn"
-            onClick={(e) => {
-              e.stopPropagation()
-              openEdit()
-            }}
-            style={{
-              marginTop: '12px',
-              padding: '8px 16px',
-              backgroundColor: '#007bff',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              display: 'block',
-            }}
-          >
-            Edit Quiz
-          </button>
-        )}
         {editing && (
           <QuizEditModal
             question={question}
@@ -90,7 +59,21 @@ export function QuizComponent(node: any, view: any, getPos: () => number) {
   }
 
   function selectAnswer(answerId: string) {
-    updateAttributes({ selectedAnswer: answerId, showResult: true })
+    // Update local state only - don't persist to markdown
+    selectedAnswer = answerId
+    showResult = true
+    render()
+  }
+
+  function selectNode() {
+    const pos = getPos()
+    if (typeof pos === 'number') {
+      const { state, dispatch } = view
+      const tr = state.tr.setSelection(
+        NodeSelection.create(state.doc, pos)
+      )
+      dispatch(tr)
+    }
   }
 
   function openEdit() {
