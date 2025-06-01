@@ -30,6 +30,20 @@ export const highlightSchema = $markSchema('highlight', () => ({
       class: 'milkdown-highlight',
     },
   ],
+  toMarkdown: {
+    match: (mark) => mark.type.name === 'highlight',
+    runner: (state, mark, node) => {
+      state.withMark(mark, 'highlight', undefined, { color: mark.attrs.color })
+    },
+  },
+  parseMarkdown: {
+    match: (mark) => mark.type === 'highlight',
+    runner: (state, mark, type) => {
+      state.openMark(type, { color: mark.color || 'yellow' })
+      if (mark.children) state.next(mark.children)
+      state.closeMark(type)
+    },
+  },
 }))
 
 // Toggle highlight command
@@ -67,52 +81,51 @@ export const highlightFeature: DefineFeature = (editor) => {
 }
 
 // Main highlight toolbar item
-export const highlightToolbarItem: ToolbarItem = ToolbarItemPresets.requiresSelection({
-  key: 'highlight',
-  icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+export const highlightToolbarItem: ToolbarItem =
+  ToolbarItemPresets.requiresSelection({
+    key: 'highlight',
+    icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
     <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001z"/>
   </svg>`,
-  tooltip: 'Highlight selected text',
-  onClick: (ctx) => {
-    const commands = ctx.get(commandsCtx)
-    commands.call(toggleHighlightCommand.key)
-  },
-  isActive: (ctx, selection) => {
-    return isHighlightActive(ctx, selection)
-  },
-})
+    tooltip: 'Highlight selected text',
+    onClick: (ctx) => {
+      const commands = ctx.get(commandsCtx)
+      commands.call(toggleHighlightCommand.key)
+    },
+    isActive: (ctx, selection) => {
+      return isHighlightActive(ctx, selection)
+    },
+  })
 
 // Color-specific highlight items
-export const createHighlightItem = (
-  color: string,
-  name: string
-): ToolbarItem => ToolbarItemPresets.requiresSelection({
-  key: `highlight-${color.replace('#', '')}`,
-  icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
-    color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'
-  };">A</span>`,
-  tooltip: `Highlight with ${name}`,
-  onClick: (ctx) => {
-    const commands = ctx.get(commandsCtx)
-    commands.call(toggleHighlightCommand.key, color)
-  },
-  isActive: (ctx, selection) => {
-    const highlightType = highlightSchema.type(ctx)
-    const view = ctx.get(editorViewCtx)
-    if (!view || !view.state) return false
-    const { from, to } = selection
-    let hasColorHighlight = false
-    view.state.doc.nodesBetween(from, to, (node: any) => {
-      if (hasColorHighlight) return false
-      const mark = node.marks.find((m: any) => m.type === highlightType)
-      if (mark && mark.attrs.color === color) {
-        hasColorHighlight = true
-        return false
-      }
-    })
-    return hasColorHighlight
-  },
-})
+export const createHighlightItem = (color: string, name: string): ToolbarItem =>
+  ToolbarItemPresets.requiresSelection({
+    key: `highlight-${color.replace('#', '')}`,
+    icon: `<span style="background-color: ${color}; padding: 2px 6px; border-radius: 3px; font-weight: bold; font-size: 12px; color: ${
+      color === 'yellow' || color === '#ffff00' ? '#333' : '#fff'
+    };">A</span>`,
+    tooltip: `Highlight with ${name}`,
+    onClick: (ctx) => {
+      const commands = ctx.get(commandsCtx)
+      commands.call(toggleHighlightCommand.key, color)
+    },
+    isActive: (ctx, selection) => {
+      const highlightType = highlightSchema.type(ctx)
+      const view = ctx.get(editorViewCtx)
+      if (!view || !view.state) return false
+      const { from, to } = selection
+      let hasColorHighlight = false
+      view.state.doc.nodesBetween(from, to, (node: any) => {
+        if (hasColorHighlight) return false
+        const mark = node.marks.find((m: any) => m.type === highlightType)
+        if (mark && mark.attrs.color === color) {
+          hasColorHighlight = true
+          return false
+        }
+      })
+      return hasColorHighlight
+    },
+  })
 
 // Predefined color toolbar items
 export const highlightToolbarItems: ToolbarItem[] = [

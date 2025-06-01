@@ -1,108 +1,144 @@
 import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { NodeSelection } from 'prosemirror-state'
+
 import type { QuizOption, QuizAttrs } from '../types/quiz'
 
-interface QuizReactViewProps {
-  question: string
-  options: QuizOption[]
-  selectedAnswer?: string
-  showResult: boolean
-  onSelect: (answerId: string) => void
-}
+import { QuizEditModal } from './quiz-edit-modal'
+import { QuizReactView } from './quiz-react-view'
 
-// Simple React component using useState patterns
-const QuizReactView: React.FC<QuizReactViewProps> = ({
-  question,
-  options,
-  selectedAnswer,
-  showResult,
-  onSelect,
-}) => {
-  const correctAnswer = options.find(o => o.isCorrect)?.text || ''
+// Functional node view for Quiz
+export function QuizComponent(node: any, view: any, getPos: () => number) {
+  const dom = document.createElement('div')
+  let reactRoot: any = null
+  let editing = false
+  let isSelected = false
+  let currentNode = node
 
-  return (
-    <div style={{ border: '1px solid #ddd', borderRadius: '4px', padding: '12px', margin: '8px 0' }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>{question}</div>
-      <div>
-        {options.map((option) => (
-          <div
-            key={option.id}
-            onClick={() => onSelect(option.id)}
+  function render() {
+    if (!reactRoot) {
+      reactRoot = createRoot(dom)
+    }
+    const { question, options, selectedAnswer, showResult } =
+      currentNode.attrs || {}
+    reactRoot.render(
+      <div
+        tabIndex={0}
+        style={{
+          outline: isSelected ? '2px solid #007bff' : 'none',
+          cursor: 'pointer',
+        }}
+        onClick={(e) => {
+          e.stopPropagation()
+          // Focus and select the node in the editor
+          if (dom && typeof dom.focus === 'function') dom.focus()
+          if (!isSelected) {
+            // Force selection in the editor
+            const pos = getPos()
+            if (typeof pos === 'number') {
+              const { state, dispatch } = view
+              const tr = state.tr.setSelection(
+                new NodeSelection(state.doc.resolve(pos))
+              )
+              dispatch(tr)
+            }
+          }
+        }}
+      >
+        <QuizReactView
+          question={question}
+          options={options}
+          selectedAnswer={selectedAnswer}
+          showResult={showResult}
+          onSelect={selectAnswer}
+          onEdit={openEdit}
+          isSelected={isSelected}
+        />
+        {isSelected && !editing && (
+          <button
+            className="quiz-edit-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              openEdit()
+            }}
             style={{
-              padding: '8px',
-              margin: '4px 0',
-              border: `1px solid ${selectedAnswer === option.id ? '#007bff' : '#ddd'}`,
+              marginTop: '12px',
+              padding: '8px 16px',
+              backgroundColor: '#007bff',
+              color: '#fff',
+              border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
-              backgroundColor: selectedAnswer === option.id ? '#e3f2fd' : '#fff',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              display: 'block',
             }}
           >
-            {selectedAnswer === option.id ? '●' : '○'} {option.text}
-            {showResult && option.isCorrect && ' ✓'}
-          </div>
-        ))}
+            Edit Quiz
+          </button>
+        )}
+        {editing && (
+          <QuizEditModal
+            question={question}
+            options={options}
+            onSave={saveEdit}
+            onCancel={closeEdit}
+          />
+        )}
       </div>
-      {showResult && (
-        <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#e8f5e8', borderRadius: '4px' }}>
-          Correct answer: {correctAnswer}
-        </div>
-      )}
-    </div>
-  )
-}
-
-export class QuizComponent {
-  dom: HTMLElement
-  node: any
-  view: any
-  getPos: () => number
-  reactRoot: any = null
-
-  constructor(node: any, view: any, getPos: () => number) {
-    this.node = node
-    this.view = view
-    this.getPos = getPos
-    this.dom = document.createElement('div')
-    this.render()
-  }
-
-  render() {
-    if (!this.reactRoot) {
-      this.reactRoot = createRoot(this.dom)
-    }
-
-    const { question, options, selectedAnswer, showResult } = this.node.attrs || {}
-
-    this.reactRoot.render(
-      <QuizReactView
-        question={question}
-        options={options}
-        selectedAnswer={selectedAnswer}
-        showResult={showResult}
-        onSelect={this.selectAnswer}
-      />
     )
   }
 
-  selectAnswer = (answerId: string) => {
-    this.updateAttributes({ selectedAnswer: answerId, showResult: true })
+  function selectAnswer(answerId: string) {
+    updateAttributes({ selectedAnswer: answerId, showResult: true })
   }
 
-  updateAttributes(attrs: Partial<QuizAttrs>) {
-    const pos = this.getPos()
+  function openEdit() {
+    editing = true
+    render()
+  }
+
+  function closeEdit() {
+    editing = false
+    render()
+  }
+
+  function saveEdit(question: string, options: QuizOption[]) {
+    updateAttributes({ question, options })
+    editing = false
+    render()
+  }
+
+  function updateAttributes(attrs: Partial<QuizAttrs>) {
+    const pos = getPos()
     if (typeof pos !== 'number') return
-    
-    const tr = this.view.state.tr.setNodeMarkup(pos, undefined, {
-      ...this.node.attrs,
+    const tr = view.state.tr.setNodeMarkup(pos, undefined, {
+      ...currentNode.attrs,
       ...attrs,
     })
-    this.view.dispatch(tr)
+    view.dispatch(tr)
   }
 
-  destroy() {
-    if (this.reactRoot) {
-      this.reactRoot.unmount()
-      this.reactRoot = null
-    }
+  render()
+
+  return {
+    dom,
+    update(
+      node: any,
+      decorations: any,
+      innerDecorations: any,
+      selected: boolean
+    ) {
+      currentNode = node
+      isSelected = selected
+      render()
+      return true
+    },
+    destroy() {
+      if (reactRoot) {
+        reactRoot.unmount()
+        reactRoot = null
+      }
+    },
   }
 }

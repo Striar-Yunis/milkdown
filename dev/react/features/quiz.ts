@@ -54,11 +54,18 @@ export const quizSchema = $nodeSchema('quiz', () => ({
     match: (node) => node.type.name === 'quiz',
     runner: (state, node) => {
       // Serialize as a custom HTML block for now
-      state.addNode('html', undefined, `<div data-type="quiz" data-question="${node.attrs.question}" data-options='${JSON.stringify(node.attrs.options)}'></div>`)
+      state.addNode(
+        'html',
+        undefined,
+        `<div data-type="quiz" data-question="${node.attrs.question}" data-options='${JSON.stringify(node.attrs.options)}'></div>`
+      )
     },
   },
   parseMarkdown: {
-    match: (node) => node.type === 'html' && typeof node.value === 'string' && node.value.includes('data-type="quiz"'),
+    match: (node) =>
+      node.type === 'html' &&
+      typeof node.value === 'string' &&
+      node.value.includes('data-type="quiz"'),
     runner: (state, node, type) => {
       // This is a stub: you can implement parsing from HTML string if needed
       state.openNode(type, {
@@ -77,20 +84,17 @@ export const quizSchema = $nodeSchema('quiz', () => ({
 }))
 
 // Simple command to insert a quiz
-export const insertQuizCommand = $command(
-  'InsertQuiz',
-  (ctx) => () => {
-    return (state, dispatch) => {
-      const quizType = quizSchema.type(ctx)
-      const quizNode = quizType.create()
-      
-      if (dispatch) {
-        dispatch(state.tr.replaceSelectionWith(quizNode))
-      }
-      return true
+export const insertQuizCommand = $command('InsertQuiz', (ctx) => () => {
+  return (state, dispatch) => {
+    const quizType = quizSchema.type(ctx)
+    const quizNode = quizType.create()
+
+    if (dispatch) {
+      dispatch(state.tr.replaceSelectionWith(quizNode))
     }
+    return true
   }
-)
+})
 
 // Quiz component registration
 export const quizComponent = $component('quiz', () => ({
