@@ -1,72 +1,91 @@
-# Crepe Plugin Examples
+# Plugin Examples - Simplified & Complex
 
-This directory contains organized examples of Crepe editor plugins, demonstrating text highlighting and interactive quiz functionality.
+This directory contains plugin examples for Milkdown, organized to provide both simple learning examples and complex reference implementations.
 
-## Structure
+## 🚀 Quick Start - Use the Simplified Examples
+
+### Vanilla JavaScript
+- **Location**: `./vanilla/`
+- **Quiz Example**: 168 lines total (components + features)
+- **Focus**: Clean, minimal code for learning plugin development
+
+### React
+- **Location**: `./react/`  
+- **Quiz Example**: 189 lines total (components + features)
+- **Focus**: Proper React patterns with useState and clean components
+
+## 📚 Structure
 
 ```
 dev/
-├── vanilla/            # Vanilla JavaScript examples
-│   ├── index.html      # Main demo page
-│   ├── index.ts        # Editor setup
-│   ├── features/       # Feature definitions
-│   │   ├── highlight.ts
-│   │   └── quiz.ts
-│   └── components/     # Component implementations
-│       └── quiz-component.ts
-├── react/              # React-based examples
-│   ├── index.html      # Main demo page
-│   ├── index.tsx       # Editor setup
-│   ├── features/       # Feature definitions
-│   │   ├── highlight.ts
-│   │   └── quiz.ts
-│   ├── components/     # React components
-│   │   ├── QuizComponent.tsx
-│   │   ├── QuizReactView.tsx
-│   │   └── QuizEditModal.tsx
-│   └── types/          # TypeScript types
-│       └── quiz.ts
+├── vanilla/              # 📖 SIMPLIFIED vanilla JS examples
+│   ├── README.md         # Getting started guide
+│   ├── features/         # Simplified feature definitions
+│   ├── components/       # Simple component implementations  
+│   └── complex/          # 🔧 Original complex examples
+├── react/                # 📖 SIMPLIFIED React examples
+│   ├── README.md         # Getting started guide
+│   ├── features/         # Simplified feature definitions
+│   ├── components/       # Clean React components
+│   └── complex/          # 🔧 Original complex examples
+└── src/                  # Build tooling
 ```
 
-## Features Demonstrated
+## ✨ What's New - Dramatically Simplified Examples
 
-### 🎨 Text Highlighting
+### Before vs After
 
-- **Multiple Colors**: Yellow, Pink, Green, Blue, Orange
-- **Toolbar Integration**: Custom toolbar buttons with visual feedback
-- **State Management**: Active/disabled states based on selection
-- **ProseMirror Schema**: Complete mark schema with DOM parsing/serialization
+**Vanilla JavaScript Quiz:**
+- **Before**: 391 lines of complex DOM manipulation
+- **After**: 168 lines with simple innerHTML templates
+- **Reduction**: 57% fewer lines
 
-### 📝 Interactive Quiz Blocks
+**React Quiz:**
+- **Before**: 526 lines across multiple complex files  
+- **After**: 189 lines in clean, focused components
+- **Reduction**: 64% fewer lines
 
-- **Drag & Drop**: Fully draggable quiz blocks
-- **Live Editing**: In-place editing with modal interface
-- **Answer Validation**: Immediate feedback on correct/incorrect answers
-- **State Persistence**: Quiz state maintained across editor operations
-- **Slash Menu**: Easy insertion via `/quiz` command
+### Key Improvements
 
-## Running Examples
+✅ **Simple DOM Updates**: Uses innerHTML instead of complex createElement chains  
+✅ **Minimal Styling**: Basic inline styles instead of extensive CSS-in-JS  
+✅ **Proper React Patterns**: useState instead of DOM manipulation  
+✅ **Reduced Boilerplate**: Streamlined schemas and commands  
+✅ **Easy to Understand**: Focus on functionality over visual complexity  
 
-### Development Server
+## 🎯 When to Use Which Examples
+
+### Use Simplified Examples When:
+- Learning plugin development
+- Building basic functionality
+- Need clean, maintainable code
+- Want to understand core concepts
+
+### Use Complex Examples When:
+- Need advanced editing features
+- Want complex modal systems
+- Building production-ready UIs
+- Need advanced interactions
+
+## 🏃 Running Examples
 
 ```bash
 cd dev
 npx vite --config vite.config.mts
-echo "http://localhost:5173/vanilla/index.html or http://localhost:5173/vanilla/index.html for React"
+# Visit: http://localhost:5173/vanilla/ or http://localhost:5173/react/
 ```
 
-## Key Implementation Details
+## 📖 Features Demonstrated
 
-### Non-React Example
+### Text Highlighting
+- Multiple colors with toolbar integration
+- State management and visual feedback
+- Complete ProseMirror mark implementation
 
-- Uses vanilla JavaScript DOM manipulation
-- Direct ProseMirror node view implementation
-- Manual state management and event handling
-- No external UI library dependencies
+### Interactive Quiz Blocks  
+- Question and answer functionality
+- Selection feedback and result display
+- Clean component-based architecture
+- Easy insertion and interaction
 
-### React Example
-
-- Uses React components for UI rendering
-- React Portal integration for modals
-- React state management within components
-- Clean separation of concerns with TypeScript types
+**Start with the simplified examples for the best learning experience!**

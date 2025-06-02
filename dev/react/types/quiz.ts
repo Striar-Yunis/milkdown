@@ -7,6 +7,6 @@ export interface QuizOption {
 export interface QuizAttrs {
   question: string
   options: QuizOption[]
-  selectedAnswer?: string
-  showResult: boolean
+  // Note: selectedAnswer and showResult are not part of persisted attributes
+  // They are ephemeral UI state only
 }
